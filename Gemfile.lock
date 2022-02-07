@@ -1,5 +1,5 @@
 GEM
-  remote: https://production.s3.rubygems.org/
+  remote: https://rubygems.org/
   specs:
     backports (3.6.8)
     erubis (2.7.0)
@@ -35,7 +35,7 @@ DEPENDENCIES
   sinatra-contrib
 
 RUBY VERSION
-   ruby 2.7.0p0
+   ruby 2.7.5p203
 
 BUNDLED WITH
    2.3.5

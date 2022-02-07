@@ -1,6 +1,6 @@
-source "https://production.s3.rubygems.org"
+source "https://rubygems.org"
 
-ruby "2.7.0"
+ruby "2.7.5"
 
 gem "sinatra", "~>1.4.7"
 gem "sinatra-contrib"
