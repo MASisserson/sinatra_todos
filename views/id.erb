@@ -1,0 +1,55 @@
+<% content_for :header_links do %>
+  <a href="/lists" class="list">All Lists</a>
+<% end %>
+
+<section id="todos" class=<%= list_status(@list) %>>
+  <header>
+    <h2><%= @list[:name] %></h2>
+    <ul>
+      <li>
+        <form action="/lists/<%= @id %>/complete-all" method="post">
+          <button class="check" type="submit">Complete All</button>
+        </form>
+      </li>
+      <li>
+        <a class="edit" href="/lists/<%= @id %>/edit">Edit List</a>
+      </li>
+    </ul>
+  </header>
+
+  <ul>
+    <% order_todos(@todos).each do |todo| %>
+      <li class=<%= todo_status(todo) %>>
+        <form action="/lists/<%= @id %>/todos/<%= @todos.index(todo) %>/complete"
+              method="post" class="check">
+          <input type="hidden" name="complete"
+                 value="<%= !todo[:complete] %>" />
+          <button type="submit">Complete</button>
+        </form>
+
+        <h3><%= todo[:name] %></h3>
+
+        <form action="/lists/<%= @id %>/todos/<%= @todos.index(todo) %>/delete" 
+              method="post" class="delete">
+          <button type="submit">Delete</button>
+        </form>
+      </li>
+    <% end %>
+  </ul>
+</section>
+
+<form action="/lists/<%= @id %>/todos" method="post">
+  <dl>
+    <dt>
+      <label for="todo">Enter a new todo item:</label>
+    </dt>
+    <dd>
+      <input id="todo" name="todo" type="text" autofocus="autofocus"
+             placeholder="Something to do" 
+             value="<%= params[:todo] %>" />
+    </dd>
+  </dl>
+  <fieldset class="actions">
+    <input type="submit" value="Add" />
+  </fieldset>
+</form>
