@@ -38,6 +38,7 @@ end
 configure do
   enable :sessions
   set :sessions_secret, 'secret'
+  set :erb, :escape_html => true
 end
 
 before do
