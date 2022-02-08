@@ -38,12 +38,19 @@ end
 configure do
   enable :sessions
   set :sessions_secret, 'secret'
-  set :erb, :escape_html => true
+  set :erb, escape_html: true
 end
 
 before do
   session[:lists] ||= []
   @lists = session[:lists]
+end
+
+def find_list(list_id)
+  return @lists[list_id] if @lists[list_id]
+
+  session[:error] = 'Sorry, list could not be found.'
+  redirect '/lists'
 end
 
 not_found do
@@ -91,15 +98,16 @@ end
 # Display list items
 get '/lists/:id' do |id|
   @id = id.to_i
-  @list = @lists[@id]
+  @list = find_list(@id)
   @todos = @list[:todos]
+
   erb :id, layout: :layout
 end
 
 # Render list editing form
 get '/lists/:id/edit' do |id|
   @id = id.to_i
-  @list = @lists[@id]
+  @list = find_list(@id)
   erb :edit_list, layout: :layout
 end
 
@@ -107,7 +115,7 @@ end
 post '/lists/:id' do |id|
   @list_name = params[:list_name].strip
   @id = id.to_i
-  @list = @lists[@id]
+  @list = find_list(@id)
 
   error = error_for_list_name(@list_name)
   if error
@@ -122,7 +130,7 @@ end
 
 # Delete a todo list
 post '/lists/:id/delete' do |id|
-  name = @lists[id.to_i][:name]
+  name = find_list(id.to_i)[:name]
   @lists.delete_at id.to_i
   session[:success] = "The list \"#{name}\" has been deleted."
   redirect '/lists'
@@ -138,7 +146,7 @@ end
 # Add a new todo to a list
 post '/lists/:list_id/todos' do |list_id|
   todo = params[:todo].strip
-  @list = @lists[list_id.to_i]
+  @list = find_list(list_id.to_i)
 
   error = error_for_todo(todo)
   if error
@@ -154,7 +162,7 @@ end
 
 # Delete a todo from a list
 post '/lists/:list_id/todos/:todo_id/delete' do |list_id, todo_id|
-  @lists[list_id.to_i][:todos].delete_at todo_id.to_i
+  find_list(list_id.to_i)[:todos].delete_at todo_id.to_i
   session[:success] = 'The todo has been deleted!'
 
   redirect "/lists/#{params[:list_id]}"
@@ -163,7 +171,7 @@ end
 # Update the completion status of a todo
 post '/lists/:list_id/todos/:todo_id/complete' do |list_id, todo_id|
   state = params[:complete] == 'true'
-  @todo = @lists[list_id.to_i][:todos][todo_id.to_i]
+  @todo = find_list(list_id.to_i)[:todos][todo_id.to_i]
 
   @todo[:complete] = state
   session[:success] = 'Todo has been updated.'
@@ -173,7 +181,7 @@ end
 
 # Completes all todos in a list
 post '/lists/:list_id/complete-all' do |list_id|
-  list = @lists[list_id.to_i]
+  list = find_list(list_id.to_i)
   list[:todos].each { |todo| todo[:complete] = true }
   session[:success] = 'All todos have been accomplished!'
 
