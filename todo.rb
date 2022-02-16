@@ -5,8 +5,6 @@ require 'sinatra/reloader' if development?
 require 'tilt/erubis'
 require 'sinatra/content_for'
 
-require 'pry'
-
 helpers do
   def todos_finished(list)
     list[:todos].inject(0) do |sum, todo|
