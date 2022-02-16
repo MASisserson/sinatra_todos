@@ -5,6 +5,8 @@ require 'sinatra/reloader' if development?
 require 'tilt/erubis'
 require 'sinatra/content_for'
 
+require 'pry'
+
 helpers do
   def todos_finished(list)
     list[:todos].inject(0) do |sum, todo|
@@ -47,7 +49,7 @@ before do
 end
 
 def find_list(list_id)
-  return @lists[list_id] if @lists[list_id]
+  @lists.each { |list| return list if list[:id] == list_id }
 
   session[:error] = 'Sorry, list could not be found.'
   redirect '/lists'
@@ -89,7 +91,9 @@ post '/lists' do
     session[:error] = error
     erb :new_list, layout: :layout
   else
-    session[:lists] << { name: list_name, todos: [] }
+    id = next_item_id(@lists)
+    @lists << { id: id, name: list_name, todos: [] }
+
     session[:success] = 'The list has been created.'
     redirect '/lists'
   end
@@ -131,9 +135,15 @@ end
 # Delete a todo list
 post '/lists/:id/delete' do |id|
   name = find_list(id.to_i)[:name]
-  @lists.delete_at id.to_i
-  session[:success] = "The list \"#{name}\" has been deleted."
-  redirect '/lists'
+  list = find_list(id.to_i)
+  @lists.delete list
+
+  if env['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest'
+    '/lists'
+  else
+    session[:success] = "The list \"#{name}\" has been deleted."
+    redirect '/lists'
+  end
 end
 
 # Return an error message if the name is invalid. Return nil if name is valid.
@@ -141,6 +151,12 @@ def error_for_todo(name)
   return if (1..100).cover? name.size
 
   'Todo must be between 1 and 100 characters.'
+end
+
+# 
+def next_item_id(items)
+  max = items.map { |item| item[:id] }.max || 0
+  max + 1
 end
 
 # Add a new todo to a list
@@ -154,7 +170,9 @@ post '/lists/:list_id/todos' do |list_id|
     @id = list_id.to_i
     erb :id, layout: :layout
   else
-    @list[:todos] << { name: todo, complete: false }
+    id = next_item_id(@list[:todos])
+    @list[:todos] << { id: id, name: todo, complete: false }
+    
     session[:success] = "#{todo} was added to the list!"
     redirect "/lists/#{list_id}"
   end
@@ -162,16 +180,26 @@ end
 
 # Delete a todo from a list
 post '/lists/:list_id/todos/:todo_id/delete' do |list_id, todo_id|
-  find_list(list_id.to_i)[:todos].delete_at todo_id.to_i
-  session[:success] = 'The todo has been deleted!'
+  # have to find the right todo and delete it from the list.
+  todos = find_list(list_id.to_i)[:todos]
+  todos.delete_if { |todo| todo[:id] == todo_id.to_i }
 
-  redirect "/lists/#{params[:list_id]}"
+  if env['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest'
+    status 204
+  else
+    session[:success] = 'The todo has been deleted!'
+    redirect "/lists/#{params[:list_id]}"
+  end
 end
 
 # Update the completion status of a todo
 post '/lists/:list_id/todos/:todo_id/complete' do |list_id, todo_id|
   state = params[:complete] == 'true'
-  @todo = find_list(list_id.to_i)[:todos][todo_id.to_i]
+  todos = find_list(list_id.to_i)[:todos]
+  @todo = Hash.new
+  todos.each do |item|
+    @todo = item if item[:id] == todo_id.to_i
+  end
 
   @todo[:complete] = state
   session[:success] = 'Todo has been updated.'

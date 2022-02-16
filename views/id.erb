@@ -20,7 +20,7 @@
   <ul>
     <% order_todos(@todos).each do |todo| %>
       <li class=<%= todo_status(todo) %>>
-        <form action="/lists/<%= @id %>/todos/<%= @todos.index(todo) %>/complete"
+        <form action="/lists/<%= @id %>/todos/<%= todo[:id] %>/complete"
               method="post" class="check">
           <input type="hidden" name="complete"
                  value="<%= !todo[:complete] %>" />
@@ -29,7 +29,7 @@
 
         <h3><%= todo[:name] %></h3>
 
-        <form action="/lists/<%= @id %>/todos/<%= @todos.index(todo) %>/delete" 
+        <form action="/lists/<%= @id %>/todos/<%= todo[:id] %>/delete" 
               method="post" class="delete">
           <button type="submit">Delete</button>
         </form>
